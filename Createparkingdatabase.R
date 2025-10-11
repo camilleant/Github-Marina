@@ -113,39 +113,43 @@ describeBy(park24$olot, park24$inclevel)
 describeBy(park24$fg, park24$inclevel)
 describeBy(park24$inclevel, park24$fg)
 
-table(park24$fg,park24$inclevel)
-table(park24$inclevel)
+#breakdown by  inclevel for  each lot
 
-options(max.print=5000)
-cbind(park24$Lot,park24$fg,park24$inclevel,park24$Income)
-typeof(park24$fg)
-
-s1<-summaryBy(fg~inclevel, data=park24, FUN=c(mean,length)) 
-s1
-
-#help this is not what I want
-meanout<-park24 %>%
-  group_by(fg) %>%
-  dplyr::summarise(Mean = mean(inclow), N=n())
-meanout
-overall <- X3df %>%
+table(park24$scove)
+summary <- park24 %>%
+  filter(scove == 1) %>%
+  group_by(inclevel) %>%
   dplyr::summarise(
-    #    group = "All",
-    count = n(), 
-    mean = mean( Y1, na.rm = TRUE),
-    sum = sum( Y1, na.rm = TRUE),
-    sd = sd( Y1, na.rm = TRUE),
-    min = min( Y1, na.rm = TRUE),
-    max = max( Y1, na.rm = TRUE)
+    count = n(),
+    length = length(scove==1),
+    percent = n()/38
   )
+print(summary, n=21)
 
-overall
+table(park24$spinway)
+summary <- park24 %>%
+  filter(spinway == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    length = length(spinway==1),
+    percent = n()/39
+  )
+print(summary, n=21)
 
 
 
-      
-#cbind(park24$inclow,park24$inclevel)
-table(park24$inclevel)
+summary <- park24 %>%
+  filter(fg == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    length = length(fg==1),
+    percent = n()/9
+      )
+print(summary, n=21)
+
+
 
 
 table(park24$south,park24$inclow)
