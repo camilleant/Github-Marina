@@ -17,7 +17,7 @@ library(Hmisc)
 library(doBy)
 library(psych)
 
-#reading in file
+#Reading in file -------------
 park24<-read_excel("ParkingSurveyN459.xlsx", sheet = "Sheet", 
                  na=c("NA","na"),
                  col_types = c("numeric","numeric","date","date", "text", 
@@ -43,7 +43,7 @@ names(park24)
 str(park24)
 dim(park24)
 
-##  Income ---------
+#  Income ---------
 table(park24$Income)
 park24$inclevel <- factor(park24$Income, levels = c(
   "$0-$24,999", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", 
@@ -102,6 +102,12 @@ park24$south<-ifelse(park24$southfee==1|park24$sw199==1|park24$swst==1, 1,0)
 #park24$north<-ifelse(park24$marinb==1|park24$spinway==1|park24$spincir==1,1,0)  
 park24$north<-ifelse(park24$marinb==1|park24$spinway==1|park24$spincir==1,1,0)  
 
+table(park24$south,park24$inclow)
+table(park24$southfee,park24$inclow)
+table(park24$north,park24$inclow)
+
+#chisq.test(incdif)
+
 
 describeBy(park24$scove, park24$inclevel)
 describeBy(park24$spinway, park24$inclevel)
@@ -113,16 +119,18 @@ describeBy(park24$olot, park24$inclevel)
 describeBy(park24$fg, park24$inclevel)
 describeBy(park24$inclevel, park24$fg)
 
-#breakdown by  inclevel for  each lot
+# Breakdown by inclevel for each lot, take out NAs in inclevel ----------------
 
 table(park24$scove)
+nasum<-sum(is.na(park24$inclevel[park24$scove==1]))
+allsum<-sum(park24$scove==1)
 summary <- park24 %>%
   filter(scove == 1) %>%
   group_by(inclevel) %>%
   dplyr::summarise(
     count = n(),
     length = length(scove==1),
-    percent = n()/38
+    percent = n()/(allsum-nasum)
   )
 print(summary, n=21)
 
@@ -152,17 +160,9 @@ print(summary, n=21)
 
 
 
-table(park24$south,park24$inclow)
-table(park24$southfee,park24$inclow)
-table(park24$north,park24$inclow)
 
 
-
-#chisq.test(incdif)
-
-
-
-
+# Handy R code from other data -------------------------------
 
 #  #obs per year for full  dataset
 fish$obsyear=factor(format(fish$DATE,'%Y'))
@@ -227,35 +227,6 @@ fish %<>%
   rowwise() %>%
   mutate(distpin=zip_distance(zipcode,pinolezip)$distance)
 
-#using Oak Port View Park
-fish$oakzip <- 94607
-fish %<>%
-  rowwise() %>%
-  mutate(distoak=zip_distance(zipcode,oakzip)$distance)
-
-#Pittsburg pier next to PG&E plant
-fish$pittszip <- 94565
-fish %<>%
-  rowwise() %>%
-  mutate(distpit=zip_distance(zipcode,pittszip)$distance)
-
-#San Leandro
-fish$sleanzip <- 94577
-fish %<>%
-  rowwise() %>%
-  mutate(distslean=zip_distance(zipcode,sleanzip)$distance)
-
-#Emeryville
-fish$emeryzip <- 94608
-fish %<>%
-  rowwise() %>%
-  mutate(distemery=zip_distance(zipcode,emeryzip)$distance)
-
-#for SF - using Torpedo Wharf near GG Bridge
-fish$sfzip <- 94129
-fish %<>%
-  rowwise() %>%
-  mutate(distsf=zip_distance(zipcode,sfzip)$distance)
 
 #Anticoh
 fish$antzip <- 94509
@@ -301,16 +272,6 @@ fish$altdist2
 dim(fish)
 
 #Cost variables
-
-# AAA: https://exchange.aaa.com/automotive/aaas-your-driving-costs/
-# can assume mid rage of estimates which assumes 15,000 miles/yr driven so 61.88 cents/mile
-# includes depreciation and other costs
-
-#Alternative cost value, not used: 
-#multiply by $0.58 as cost per mile according to IRS. Now 56 cents/mile
-#https://www.driversnote.com/irs-mileage-guide/irs-mileage-rates-2020
-#https://www.shrm.org/resourcesandtools/hr-topics/benefits/pages/irs-lowers-standard-mileage-rate-for-#			2021.aspx
-
 
 fish$cost<-2*.6188*fish$distberk
 fish$costalt<-2*.6188*fish$altdist1
