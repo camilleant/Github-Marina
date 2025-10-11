@@ -123,7 +123,7 @@ typeof(park24$fg)
 s1<-summaryBy(fg~inclevel, data=park24, FUN=c(mean,length)) 
 s1
 
-
+#help this is not what I want
 meanout<-park24 %>%
   group_by(fg) %>%
   dplyr::summarise(Mean = mean(inclow), N=n())
