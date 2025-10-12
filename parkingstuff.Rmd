@@ -1,0 +1,57 @@
+---
+title: "parking stuff"
+output: word_document
+date: "2025-10-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("C:/Users/camil/Documents/Sail/Parking lots/PRA-Intercept survey data-City of Berkeley-2025")
+park24<-read.csv("park24.csv")
+library(readxl)    
+library(dplyr)
+library(tidyverse)
+library(magrittr)
+library(zipcodeR)
+library(Hmisc)
+library(doBy)
+library(psych)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r table, echo=FALSE}
+
+table(park24$scove)
+nasum<-sum(is.na(park24$inclevel[park24$scove==1]))
+allsum<-sum(park24$scove==1)
+summary <- park24 %>%
+  filter(scove == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+```
+

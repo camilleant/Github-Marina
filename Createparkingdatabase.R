@@ -43,7 +43,9 @@ names(park24)
 str(park24)
 dim(park24)
 
-#  Income ---------
+#Create variables --------------
+
+##  Income ---------
 table(park24$Income)
 park24$inclevel <- factor(park24$Income, levels = c(
   "$0-$24,999", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", 
@@ -56,7 +58,7 @@ park24$inclow<-ifelse(park24$inclevel=="$0-$24,999"|
                         park24$inclevel=="$50,000-$74,999",1,0)
 
 
-# Lots --------------------
+## Lots --------------------
 unique(park24$Lot)
 table(park24$Lot)
 unique(park24$OtherLot)
@@ -81,7 +83,7 @@ park24$swst<-as.numeric(park24$Lot=='Seawall Drive (Street)')
 park24$fg<-as.numeric(park24$Lot=='F&G')
 
 
-#reclassifying "other" 
+##reclassifying "other"  ------------------- 
 park24$scove[park24$OtherLot=="Cal Sailing"]<-1
 park24$scove[park24$OtherLot=="West cove"]<-1
 park24$scove[park24$OtherLot=="West coast"]<-1
@@ -101,6 +103,15 @@ park24$southfee<-ifelse(park24$scove==1|park24$ecove==1|park24$jk==1,1,0)
 park24$south<-ifelse(park24$southfee==1|park24$sw199==1|park24$swst==1, 1,0)
 #park24$north<-ifelse(park24$marinb==1|park24$spinway==1|park24$spincir==1,1,0)  
 park24$north<-ifelse(park24$marinb==1|park24$spinway==1|park24$spincir==1,1,0)  
+
+
+#Create database ----------
+#export
+write_csv(park24,
+          file="park24.csv"
+)
+
+#Descriptive statistics ----------------------
 
 table(park24$south,park24$inclow)
 table(park24$southfee,park24$inclow)
@@ -129,37 +140,144 @@ summary <- park24 %>%
   group_by(inclevel) %>%
   dplyr::summarise(
     count = n(),
-    length = length(scove==1),
     percent = n()/(allsum-nasum)
   )
 print(summary, n=21)
 
+table(park24$ecove)
+nasum<-sum(is.na(park24$inclevel[park24$ecove==1]))
+allsum<-sum(park24$ecove==1)
+summary <- park24 %>%
+  filter(ecove == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+table(park24$olot)
+nasum<-sum(is.na(park24$inclevel[park24$olot==1]))
+allsum<-sum(park24$olot==1)
+summary <- park24 %>%
+  filter(olot == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+table(park24$swst)
+nasum<-sum(is.na(park24$inclevel[park24$swst==1]))
+allsum<-sum(park24$swst==1)
+summary <- park24 %>%
+  filter(swst == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+table(park24$sw199)
+nasum<-sum(is.na(park24$inclevel[park24$sw199==1]))
+allsum<-sum(park24$sw199==1)
+summary <- park24 %>%
+  filter(sw199 == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+table(park24$jk)
+nasum<-sum(is.na(park24$inclevel[park24$jk==1]))
+allsum<-sum(park24$jk==1)
+summary <- park24 %>%
+  filter(jk == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+table(park24$lm)
+nasum<-sum(is.na(park24$inclevel[park24$lm==1]))
+allsum<-sum(park24$lm==1)
+summary <- park24 %>%
+  filter(lm == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+
+table(park24$skatesn)
+nasum<-sum(is.na(park24$inclevel[park24$skatesn==1]))
+allsum<-sum(park24$skatesn==1)
+summary <- park24 %>%
+  filter(skatesn == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
+
+
 table(park24$spinway)
+nasum<-sum(is.na(park24$inclevel[park24$spinway==1]))
+allsum<-sum(park24$spinway==1)
 summary <- park24 %>%
   filter(spinway == 1) %>%
   group_by(inclevel) %>%
   dplyr::summarise(
     count = n(),
-    length = length(spinway==1),
-    percent = n()/39
+    percent = n()/(allsum-nasum)
   )
 print(summary, n=21)
 
 
-
+table(park24$fg)
+nasum<-sum(is.na(park24$inclevel[park24$fg==1]))
+allsum<-sum(park24$fg==1)
 summary <- park24 %>%
   filter(fg == 1) %>%
   group_by(inclevel) %>%
   dplyr::summarise(
     count = n(),
-    length = length(fg==1),
-    percent = n()/9
-      )
+    percent = n()/(allsum-nasum)
+  )
 print(summary, n=21)
 
+table(park24$de)
+nasum<-sum(is.na(park24$inclevel[park24$de==1]))
+allsum<-sum(park24$de==1)
+summary <- park24 %>%
+  filter(de == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
 
-
-
+table(park24$marinb)
+nasum<-sum(is.na(park24$inclevel[park24$marinb==1]))
+allsum<-sum(park24$marinb==1)
+summary <- park24 %>%
+  filter(marinb == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
 
 
 # Handy R code from other data -------------------------------
