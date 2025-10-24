@@ -16,6 +16,7 @@ library(zipcodeR)
 library(Hmisc)
 library(doBy)
 library(psych)
+library(tables)
 
 #Reading in file -------------
 park24<-read_excel("ParkingSurveyN459.xlsx", sheet = "Sheet", 
@@ -49,7 +50,7 @@ dim(park24)
 table(park24$Income)
 park24$inclevel <- factor(park24$Income, levels = c(
   "$0-$24,999", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", 
-  "$100,000-$124,999", "$125,000-$149,999", "$150,000-$174,999", "$175,000-199,999", "$200,000 and up")
+  "$100,000-$124,999", "$125,000-$149,999", "$150,000-$174,999", "$175,000-$199,999", "$200,000 and up")
 )
 
 table(park24$inclevel)
@@ -57,16 +58,25 @@ park24$inclow<-ifelse(park24$inclevel=="$0-$24,999"|
                         park24$inclevel=="$25,000-$49,999"|
                         park24$inclevel=="$50,000-$74,999",1,0)
 
+park24$inc2<-ifelse(park24$inclow==1,"<$75k",">=$75k")  
+cbind(park24$inclow,park24$inc2)
+typeof(park24$inc2)
+addmargins(table(park24$inc2))
+
+
+##Date ---------------------
+
+park24$parkdate <- as.POSIXct(park24$DateTimePark, format = "%m/%d/%Y %H:%M")
+park24$DATE <- as.Date(park24$parkdate)
+park24$TIME <- format(park24$parkdate, format = "%H:%M %p")
+
+
 
 ## Lots --------------------
 unique(park24$Lot)
 table(park24$Lot)
 unique(park24$OtherLot)
 table(park24$OtherLot)
-
-#park24$location<-(park24$LOT)
-#park24$location <- gsub("oakland|Oakland", "Oakland", park24$LOT)
-
 
 park24$scove<-as.numeric(park24$Lot=='South Cove West')
 park24$ecove<-as.numeric(park24$Lot=='South Cove East')
@@ -77,10 +87,14 @@ park24$spincir<-as.numeric(park24$Lot=='Spinnaker Circle')
 park24$spinway<-as.numeric(park24$Lot=='Spinnaker Way')
 park24$marinb<-as.numeric(park24$Lot=='Marina Blvd')
 park24$jk<-as.numeric(park24$Lot=='J&K')
-park24$lm<-as.numeric(park24$Lot=='L&M')
+park24$lm<-as.numeric(park24$Lot=='L&M lot')
 park24$sw199<-as.numeric(park24$Lot=='199 Seawall Drive')
 park24$swst<-as.numeric(park24$Lot=='Seawall Drive (Street)')
 park24$fg<-as.numeric(park24$Lot=='F&G')
+
+park24$launch<-as.numeric(park24$Lot=='Launch Ramp (Paid)')
+park24$launch[park24$Lot=="Launch Stalls"]<-1
+park24$launch[park24$Lot=="Launch Ramp (Public)"]<-1
 
 
 ##reclassifying "other"  ------------------- 
@@ -97,12 +111,41 @@ park24$skatesn[park24$OtherLot=="Skates"]<-1
 park24$fg[park24$OtherLot=="F Marina"]<-1
 park24$spinway[park24$OtherLot=="B"]<-1
 
+park24$shore<- park24$OtherLot=="Shorebird" | park24$OtherLot=="Shorebird park"
 
 park24$southfee<-ifelse(park24$scove==1|park24$ecove==1|park24$jk==1,1,0)
 #cbind(park24$scove,park24$ecove,park24$jk,park24$southfee)
-park24$south<-ifelse(park24$southfee==1|park24$sw199==1|park24$swst==1, 1,0)
-#park24$north<-ifelse(park24$marinb==1|park24$spinway==1|park24$spincir==1,1,0)  
-park24$north<-ifelse(park24$marinb==1|park24$spinway==1|park24$spincir==1,1,0)  
+park24$south<-ifelse(park24$southfee==1|park24$lm==1|park24$skatesn==1|park24$olot==1|park24$swst==1, 1,0)
+park24$north<-ifelse(park24$de==1|park24$fg==1|park24$spinway==1|park24$spincir==1,1,0)  
+
+
+park24$area<-ifelse(park24$north==1,"north","other")  
+park24$area<-ifelse(park24$south==1,"south",park24$area)  
+#cbind(park24$area,park24$north,park24$south)
+
+#reclassifying "other" into another form of Lot
+
+park24$location<-park24$Lot
+#park24$location <- gsub("oakland|Oakland", "Oakland", park24$Lot)
+
+park24$location[park24$OtherLot=="Cal Sailing"]<-"South Cove West"
+park24$location[park24$OtherLot=="West cove"]<-"South Cove West"
+park24$location[park24$OtherLot=="West coast"]<-"South Cove West"
+park24$location[park24$OtherLot=="Over by cal sailing, not sure which one of those listed this is"]<-"South Cove West"
+park24$location[park24$OtherLot=="1 Seawall Drive, Gate O Dock"]<-"O Lot"
+park24$location[park24$OtherLot=="Upper HSL"]<-"199 Seawall Drive"
+park24$location[park24$OtherLot=="EAST COVE"]<-"South Cove East"
+park24$location[park24$OtherLot=="next to new toilet bldg/CAL adventures"]<-"South Cove East"
+park24$location[park24$OtherLot=="seawall"]<-"Seawall Drive (Street)"
+park24$location[park24$OtherLot=="Skates"]<-"Skates/N Lot"
+park24$location[park24$OtherLot=="F Marina"]<-"F&G"
+park24$location[park24$OtherLot=="B"]<-"Spinnaker Way"
+
+park24$location[park24$Lot=="Launch Stalls"] <-"Launch Ramp (Paid)"
+park24$location[park24$Lot=="Launch Ramp (Public)"] <-"Launch Ramp (Paid)"
+
+#check accuracy
+table(park24$Lot,park24$location)
 
 
 #Create database ----------
@@ -111,24 +154,119 @@ write_csv(park24,
           file="park24.csv"
 )
 
+park24<-data.frame(park24)
+save(park24,file="park24.Rda")
+
 #Descriptive statistics ----------------------
 
-table(park24$south,park24$inclow)
-table(park24$southfee,park24$inclow)
-table(park24$north,park24$inclow)
 
-#chisq.test(incdif)
+col1 <- c("D&E",  "Spinnaker Way Lot", "Marina Blvd",  "Spinnaker Way", "F, G, H, & I Lot", "J&K lot",   
+          "South Cove East /West Lot",  "L&M3 Lot",  "O Lot",  "Seawall Drive",  "Skates/N Lot", "Total")
+col2<- as.numeric(c(129, 36, 150, 127, 115, 92, 182, 91, 72, 90, 137, 1221) )
+col3<-(col2/1221)*100
+col3 <- sprintf("%.2f", col3)
+
+df <- data.frame(Lot = col1, ExistingCapacity = col2, Percent=col3)
+print(df)
+df
 
 
-describeBy(park24$scove, park24$inclevel)
-describeBy(park24$spinway, park24$inclevel)
-describeBy(park24$spincir, park24$inclevel)
-describeBy(park24$sw199, park24$inclevel)
-describeBy(park24$swst, park24$inclevel)
-describeBy(park24$skatesn, park24$inclevel)
-describeBy(park24$olot, park24$inclevel)
-describeBy(park24$fg, park24$inclevel)
-describeBy(park24$inclevel, park24$fg)
+table(park24$location)
+summary <- park24 %>%
+  group_by(location) %>%
+  dplyr::summarise(
+    Count = n(),
+    Percent = (n()/459)*100
+  )
+print(summary, n=21)
+
+
+addmargins(table(park24$DATE,park24$location))
+
+addmargins(table(park24$inclevel))
+table(park24$Income, park24$inclevel)
+table(park24$area,park24$inc2)
+
+
+# ===== 1. COUNTS TABLE =====
+cat("\n=== COUNTS: Parking Lot by Income ===\n")
+counts <- addmargins(table(park24$location, park24$inclevel))
+print(counts)
+
+# ===== 2. ROW PERCENTAGES =====
+# Shows: Of people parking at each lot, what % are in each income bracket?
+cat("\n=== ROW %: Income Distribution Within Each Lot ===\n")
+row_pct <- prop.table(table(park24$location, park24$inclevel), margin = 1) * 100
+row_pct_rounded <- round(row_pct, 1)
+print(row_pct_rounded)
+
+#camille adding code to get rowsums
+tab2<-rowSums(row_pct_rounded)
+tabresult<-cbind(row_pct_rounded,Total=tab2)
+tabresult
+
+
+# ===== 3. COLUMN PERCENTAGES =====
+# Shows: Of people in each income bracket, what % park at each lot?
+cat("\n=== COLUMN %: Lot Choice Within Each Income Group ===\n")
+col_pct <- prop.table(table(park24$location, park24$inclevel), margin = 2) * 100
+col_pct_rounded <- round(col_pct, 1)
+print(col_pct_rounded)
+
+#camille adding code to get rowsums
+tab3<-colSums(col_pct_rounded)
+tabresult3<-rbind(col_pct_rounded,Total=tab3)
+tabresult3
+
+
+
+
+# ===== BONUS: Pretty output with knitr =====
+library(knitr)
+
+cat("\n=== FORMATTED TABLES ===\n\n")
+
+kable(counts, caption = "TABLE 1: Counts with Totals")
+
+kable(row_pct_rounded, caption = "TABLE 2: Row Percentages (% within each lot)")
+
+kable(col_pct_rounded, caption = "TABLE 3: Column Percentages (% within each income group)")
+
+
+kable(tabresult, caption = "TABLE 2: Row Percentages (% within each lot)")
+kable(tabresult3, caption = "TABLE 3: Column Percentages (% within each income group)")
+
+
+
+
+# Barcharts -----------------------
+
+addmargins(table(park24$south,park24$inclow))
+addmargins(table(park24$southfee,park24$inclow))
+addmargins(table(park24$north,park24$inclow))
+addmargins(table(park24$area,park24$inc2))
+
+
+ggplot(data=subset(park24, !is.na(inc2)), aes(fill=inc2, y=inc2, x=area)) + 
+  geom_bar(position='stack', stat='identity')
+
+
+mytable<-table(park24$area, park24$inc2)
+row_percentages <- prop.table(mytable, margin = 1) * 100
+row_percentages
+
+
+barplot <- barplot(row_percentages , beside=T , legend.text=T,col=c("blue" , "skyblue") , ylim=c(0,100) , ylab="height")
+
+df<-prop.table(table(park24$area, park24$inc2), margin = 1) * 100
+df
+
+
+#ggplot(df, aes(fill=inc2, y=value, x=area)) + 
+#  geom_bar(position="dodge", stat="identity")
+
+
+
 
 # Breakdown by inclevel for each lot, take out NAs in inclevel ----------------
 
@@ -242,6 +380,17 @@ summary <- park24 %>%
   )
 print(summary, n=21)
 
+table(park24$spincir)
+nasum<-sum(is.na(park24$inclevel[park24$spinway==1]))
+allsum<-sum(park24$spinway==1)
+summary <- park24 %>%
+  filter(spinway == 1) %>%
+  group_by(inclevel) %>%
+  dplyr::summarise(
+    count = n(),
+    percent = n()/(allsum-nasum)
+  )
+print(summary, n=21)
 
 table(park24$fg)
 nasum<-sum(is.na(park24$inclevel[park24$fg==1]))
@@ -279,7 +428,18 @@ summary <- park24 %>%
   )
 print(summary, n=21)
 
+# Race Ethnicity ----------------
 
+
+table(park24$RaceEthnicity,park24$swst)
+table(park24$RaceEthnicity,park24$sw199)
+table(park24$RaceEthnicity,park24$jk)
+
+
+
+
+
+#STOP
 # Handy R code from other data -------------------------------
 
 #  #obs per year for full  dataset
