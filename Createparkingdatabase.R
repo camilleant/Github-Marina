@@ -12,7 +12,7 @@ library(readxl)
 library(dplyr)
 library(tidyverse)
 library(magrittr)
-library(zipcodeR)
+#library(zipcodeR)
 library(Hmisc)
 library(doBy)
 library(psych)
@@ -47,13 +47,13 @@ dim(park24)
 #Create variables --------------
 
 ##  Income ---------
-table(park24$Income)
+addmargins(table(park24$Income))
 park24$inclevel <- factor(park24$Income, levels = c(
   "$0-$24,999", "$25,000-$49,999", "$50,000-$74,999", "$75,000-$99,999", 
   "$100,000-$124,999", "$125,000-$149,999", "$150,000-$174,999", "$175,000-$199,999", "$200,000 and up")
 )
 
-table(park24$inclevel)
+addmargins(table(park24$inclevel))
 park24$inclow<-ifelse(park24$inclevel=="$0-$24,999"|
                         park24$inclevel=="$25,000-$49,999"|
                         park24$inclevel=="$50,000-$74,999",1,0)
@@ -77,6 +77,8 @@ unique(park24$Lot)
 table(park24$Lot)
 unique(park24$OtherLot)
 table(park24$OtherLot)
+table(park24$OtherLot,park24$Income)
+
 
 park24$scove<-as.numeric(park24$Lot=='South Cove West')
 park24$ecove<-as.numeric(park24$Lot=='South Cove East')
@@ -97,7 +99,7 @@ park24$launch[park24$Lot=="Launch Stalls"]<-1
 park24$launch[park24$Lot=="Launch Ramp (Public)"]<-1
 
 
-##reclassifying "other"  ------------------- 
+##Reclassifying "other"  for specific lots ------------------- 
 park24$scove[park24$OtherLot=="Cal Sailing"]<-1
 park24$scove[park24$OtherLot=="West cove"]<-1
 park24$scove[park24$OtherLot=="West coast"]<-1
@@ -109,21 +111,20 @@ park24$ecove[park24$OtherLot=="next to new toilet bldg/CAL adventures"]<-1
 park24$swst[park24$OtherLot=="seawall"]<-1
 park24$skatesn[park24$OtherLot=="Skates"]<-1
 park24$fg[park24$OtherLot=="F Marina"]<-1
-park24$spinway[park24$OtherLot=="B"]<-1
 
+#which lot is shorebird? leave out of analysis
 park24$shore<- park24$OtherLot=="Shorebird" | park24$OtherLot=="Shorebird park"
 
 park24$southfee<-ifelse(park24$scove==1|park24$ecove==1|park24$jk==1,1,0)
-#cbind(park24$scove,park24$ecove,park24$jk,park24$southfee)
+cbind(park24$scove,park24$ecove,park24$jk,park24$southfee)
 park24$south<-ifelse(park24$southfee==1|park24$lm==1|park24$skatesn==1|park24$olot==1|park24$swst==1, 1,0)
-park24$north<-ifelse(park24$de==1|park24$fg==1|park24$spinway==1|park24$spincir==1,1,0)  
-
+park24$north<-ifelse(park24$de==1|park24$launch==1|park24$spinway==1|park24$spincir==1,1,0)  
 
 park24$area<-ifelse(park24$north==1,"north","other")  
 park24$area<-ifelse(park24$south==1,"south",park24$area)  
-#cbind(park24$area,park24$north,park24$south)
+cbind(park24$area,park24$north,park24$south)
 
-#reclassifying "other" into another form of Lot
+#Reclassifying "other" into another form of Lot
 
 park24$location<-park24$Lot
 #park24$location <- gsub("oakland|Oakland", "Oakland", park24$Lot)
@@ -139,13 +140,39 @@ park24$location[park24$OtherLot=="next to new toilet bldg/CAL adventures"]<-"Sou
 park24$location[park24$OtherLot=="seawall"]<-"Seawall Drive (Street)"
 park24$location[park24$OtherLot=="Skates"]<-"Skates/N Lot"
 park24$location[park24$OtherLot=="F Marina"]<-"F&G"
-park24$location[park24$OtherLot=="B"]<-"Spinnaker Way"
 
 park24$location[park24$Lot=="Launch Stalls"] <-"Launch Ramp (Paid)"
 park24$location[park24$Lot=="Launch Ramp (Public)"] <-"Launch Ramp (Paid)"
 
 #check accuracy
 table(park24$Lot,park24$location)
+
+
+## Race Ethnicity ----------------
+
+names(park24)
+#no indicator for Latino/Hispanic in RE variable
+#N=397
+addmargins(table(park24$RaceEthnicity))
+
+#checking if Hispanic was captured in other
+unique(park24$OtherRE)
+
+# yes Hispanic latino is captured in raceethnicity="other"
+# also specific variable HispLat
+# but only 17 whereas kittelson, page 42 fig 33 says there are 51.
+# they just added whoever said HispLat even if mixed. 
+addmargins(table(park24$OtherRE, park24$HispLat))
+addmargins(table(park24$RaceEthnicity,park24$HispLat))
+
+#Following Kittelson report and just classifying whoever said Hispanic/Latino as Hispanic/Latino
+park24$RE <-park24$RaceEthnicity
+park24$RE <-ifelse(park24$HispLat=="Yes","Hispanic", park24$RE)  
+
+#reclassifies folks who said yes to hispanic even if categorized as a race alone in RaceEthnicity
+addmargins(table(park24$RaceEthnicity,park24$HispLat))
+addmargins(table(park24$RE,park24$HispLat))
+
 
 
 #Create database ----------
@@ -158,8 +185,12 @@ park24<-data.frame(park24)
 save(park24,file="park24.Rda")
 
 #Descriptive statistics ----------------------
+#if above is current and run-in:
+load("park24.Rda")
 
 
+
+#from kittelson report
 col1 <- c("D&E",  "Spinnaker Way Lot", "Marina Blvd",  "Spinnaker Way", "F, G, H, & I Lot", "J&K lot",   
           "South Cove East /West Lot",  "L&M3 Lot",  "O Lot",  "Seawall Drive",  "Skates/N Lot", "Total")
 col2<- as.numeric(c(129, 36, 150, 127, 115, 92, 182, 91, 72, 90, 137, 1221) )
@@ -168,7 +199,19 @@ col3 <- sprintf("%.2f", col3)
 
 df <- data.frame(Lot = col1, ExistingCapacity = col2, Percent=col3)
 print(df)
-df
+
+## Sample, N=459
+summary <- park24 %>%
+  group_by(location) %>%
+  dplyr::summarise(
+    Count = n(),
+    Percent = (n()/459)*100
+  )
+print(summary, n=21)
+
+
+#dates
+table(park24$DATE,park24$location)
 
 
 table(park24$location)
@@ -186,6 +229,10 @@ addmargins(table(park24$DATE,park24$location))
 addmargins(table(park24$inclevel))
 table(park24$Income, park24$inclevel)
 table(park24$area,park24$inc2)
+
+
+
+
 
 
 # ===== 1. COUNTS TABLE =====
@@ -258,13 +305,20 @@ row_percentages
 
 barplot <- barplot(row_percentages , beside=T , legend.text=T,col=c("blue" , "skyblue") , ylim=c(0,100) , ylab="height")
 
-df<-prop.table(table(park24$area, park24$inc2), margin = 1) * 100
+prop.table(table(park24$area, park24$inc2), margin = 1) * 100
+
+Area<-c("north", "north", "other", "other", "south", "south")
+Income<-c("<$75k", ">=$75k", "<$75k", ">=$75k", "<$75k", ">=$75k")
+Percent<-c(33.333, 66.667, 32.941, 67.05882, 38.82353, 61.17647)
+df <-data.frame(Area,Income,Percent)
 df
 
+ggplot(df, aes(fill=Income, y=Percent, x=Area)) + 
+  geom_bar(position="dodge", stat="identity")+ ggtitle("Figure 1: Visitor Income by Waterfront Area") +
+  scale_fill_manual("Income",values = c('#0023a0', 'orange')
+)
 
-#ggplot(df, aes(fill=inc2, y=value, x=area)) + 
-#  geom_bar(position="dodge", stat="identity")
-
+#f9a635
 
 
 
@@ -428,12 +482,42 @@ summary <- park24 %>%
   )
 print(summary, n=21)
 
-# Race Ethnicity ----------------
+
+# RE tables -------------------
+
+## ===== RE  COUNTS TABLE  =====
+cat("\n=== COUNTS: Parking Lot by Race/Etnicity ===\n")
+countsre <- addmargins(table(park24$location, park24$RE))
+print(countsre)
+kable(countsre, caption = "Sample Counts")
 
 
-table(park24$RaceEthnicity,park24$swst)
-table(park24$RaceEthnicity,park24$sw199)
-table(park24$RaceEthnicity,park24$jk)
+## ===== RE ROW PERCENTAGES =====
+# Shows: Of people parking at each lot, what % are in each RE?
+cat("\n=== ROW %: RE Distribution Within Each Lot ===\n")
+rowpctRE <- prop.table(table(park24$location, park24$RE), margin = 1) * 100
+rowpctRErounded <- round(rowpctRE, 1)
+#print(rowpctRErounded)
+
+#camille adding code to get rowsums
+tabRE1<-rowSums(rowpctRErounded)
+RErow<-cbind(rowpctRErounded,Total=tabRE1)
+RErow
+kable(RErow, caption = "Row Percentages (% RE within each lot)")
+
+
+## ===== RE COLUMN PERCENTAGES =====
+# Shows: Of people in each RE, what % park at each lot?
+cat("\n=== COLUMN %: Lot Choice Within Each RE Group ===\n")
+colpctRE <- prop.table(table(park24$location, park24$RE), margin = 2) * 100
+colpctRErounded <- round(colpctRE, 1)
+#print(colpctRErounded)
+
+#camille adding code to get rowsums
+tabRE2<-colSums(colpctRErounded)
+REcol<-rbind(colpctRErounded,Total=tabRE2)
+REcol
+kable(REcol, caption = "Column Percentages (% within each RE group)")
 
 
 

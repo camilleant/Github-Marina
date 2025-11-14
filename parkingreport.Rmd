@@ -1,5 +1,6 @@
 ---
-title: "parking analysis"
+title: "Berkeley waterfront visitation by vehicle: Preliminary parking analysis focusing on socioeconomic characteristics"
+author: Camille Antinori
 output: pdf_document
 date: "`r format(Sys.Date(), '%B %d, %Y')`" 
 geometry: "left=3cm,right=3cm,top=2cm,bottom=2cm"
@@ -9,64 +10,41 @@ classoption: landscape
 ```{r setup, include=FALSE}
 #knitr::opts_chunk$set(echo = TRUE)
 setwd("C:/Users/camil/Documents/Sail/Parking lots/PRA-Intercept survey data-City of Berkeley-2025")
-#park24<-read.csv("park24.csv")
 load("park24.Rda")
-library(readxl)    
 library(dplyr)
 library(tidyverse)
 library(magrittr)
-library(zipcodeR)
 library(Hmisc)
 library(doBy)
 library(psych)
-
+library(tables)
+library(knitr)
 ```
 
-## Lot Existing Capacity
 
-```{r echo = FALSE}
-col1 <- c("D&E",  "Spinnaker Way Lot", "Marina Blvd",  "Spinnaker Way", "F, G, H, & I Lot", "J&K lot",   
-          "South Cove East /West Lot",  "L&M3 Lot",  "O Lot",  "Seawall Drive",  "Skates/N Lot", "Total")
-col2<- as.numeric(c(129, 36, 150, 127, 115, 92, 182, 91, 72, 90, 137, 1221) )
-col3<-(col2/1221)*100
-col3 <- sprintf("%.2f", col3)
-df <- data.frame(Lot = col1, ExistingCapacity = col2, Percent=col3)
-print(df)
+Below is a set of tables we derived from in-person survey data collected by Kittelson and Associates, Inc. The City of Berkeley hired this consulting firm to conduct a parking demand management study to assess impacts of the proposed ferry project on current and future recreational use.  The intercept survey was conducted on three Thursdays and two Saturdays between April and August 2024.  Setting aside any issue with methodology, we have cleaned and organized the available data to better illustrate the diversity of visitors to the  Berkeley waterfront as compared to the consulting report.  The original dataset had 459 observations. We used 330 observations that had complete information for household income brackets. Refer to p. 12 of the Kittelson report for a map of the waterfront  and lots.  The lots slated for new parking fees via pay stations and annual passes are: South Cove West, South Cove East and J&K lots.  
 
-```
+This is a work in progress.  Please let us know any questions about our results and comments for future work.  Below you will find: 
 
-## Sample, N=459
+* Table 1: Parking Lot Visits by Income (Counts) 
+* Table 2: Row Percentages (% within each lot)
+* Table 3: Column Percentages (% within each income group)
+* Visitation to south v. north areas of waterfront, by income (Figure 1: Visitor Income by Waterfront Area)
+* Reclassification of "other" 
 
-```{r echo = FALSE}
-summary <- park24 %>%
-  group_by(location) %>%
-  dplyr::summarise(
-    Count = n(),
-    Percent = (n()/459)*100
-  )
-print(summary, n=21)
-```
 
 \newpage
-
-## Tables by area and income
-
-"South" refers to South Cove East and West lots, J&K, L&M, Skates/N, O lot, and Seawall Drive.  I did not include data points from the 199 Seawall Lot for HsL restaurant as the gates are usually locked so that the lot if inaccessible.  "North" refers to D&E, F&G, Spinnaker Way and Spinnaker Circle. 
-"Other" refers to Marina Blvd, H&I and the paid launch ramp lot. Plus any reference to 199 Seawall and random notes (including those who biked.) 
-
-
 
 ```{r table, echo=FALSE}
-mytable<-table(park24$area, park24$inc2)
-row_percentages <- prop.table(mytable, margin = 1) * 100
-row_percentages
+
+#cat("\n=== COUNTS: Parking Lot by Income ===\n")
+counts <- addmargins(table(park24$location, park24$inclevel))
+kable(counts, caption = "Parking Lot Visits by Income (Counts)")
 
 ```
 
 \newpage
-
-## Tables by income and lot
-Of people parking at each lot, what % are in each income bracket?
+This table answers the question: Of people parking at each lot, what % are in each income bracket?  Seawall Drive and South Cove West have most  lowest-income (<\$25k) income visitors.  J&K lot next to the baitshop  sees a high number of those earning less than $75k, as does L&M which was halved in size by the parking enforcement department, and H&I.   J&K and South Cove West are slated for marina parking fees. 
 
 
 ```{r table1, echo=FALSE}
@@ -77,30 +55,120 @@ row_pct_rounded <- round(row_pct, 1)
 #camille adding code to get rowsums
 tab2<-rowSums(row_pct_rounded)
 tabresult<-cbind(row_pct_rounded,Total=tab2)
-
-library(knitr)
 kable(tabresult, caption = "Row Percentages (% within each lot)")
-
 
 ```
 
 
 \newpage
 
-Of people in each income bracket, what % park at each lot?
+Of people in each income bracket, what % park at each lot? The lowest income group (<\$25k)  most often parks in South Cove West (slated for marina parking fees).  
 
 ```{r table2, echo=FALSE}
 
 col_pct <- prop.table(table(park24$location, park24$inclevel), margin = 2) * 100
 col_pct_rounded <- round(col_pct, 1)
 
-#camille adding code to get rowsums
+#adding code to get rowsums
 tab3<-colSums(col_pct_rounded)
 tabresult3<-rbind(col_pct_rounded,Total=tab3)
-
 kable(tabresult3, caption = "Column Percentages (% within each income group)")
 
+```
 
+\newpage
+
+## Visitation to south v. north areas of waterfront, by income
+
+Consistent with the public's  general understanding and earlier city-led focus groups, we define the waterfront's geographic areas as follows:
+
+* "South" refers to South Cove East and West lots, J&K, L&M, Skates/N, O lot, and Seawall Drive.  Data points from the 199 Seawall next to the derelict HsL restaurant in the south part of the waterfront are currently not included as the lot's gates are usually locked during the weekdays on which the respondents' data was collected, indicating the  data may be in error. We are seeking clarification from city staff and will update as we receive more information 
+
+* "North" refers to D&E, the launch ramps, Spinnaker Way and Spinnaker Circle. 
+
+* "Other" includes  any response not in "north" or "south" above.   
+
+The barchart below indicates a tendency for the south area in aggregate to attract lower income visitors more than other parts of the waterfront. While north and other have similar breakdowns of  lower income (defined as <\$75) and higher income (defined as >=\$75k), the south area has more lower and less higher income as a percentage. 
+
+
+```{r tableprop, echo=FALSE}
+Area<-c("north", "north", "other", "other", "south", "south")
+Income<-c("<$75k", ">=$75k", "<$75k", ">=$75k", "<$75k", ">=$75k")
+Percent<-c(33.333, 66.667, 32.941, 67.05882, 38.82353, 61.17647)
+df <-data.frame(Area,Income,Percent)
+ggplot(df, aes(fill=Income, y=Percent, x=Area)) + 
+  geom_bar(position="dodge", stat="identity")+ ggtitle("Figure 1: Visitor Income by Waterfront Area")+
+  scale_fill_manual("Income",values = c('#0023a0', 'orange')
+)
+
+```
+
+
+\newpage
+
+# Reclassification of "other"
+
+Forty-six of the Kittelson survey responses were classified as "other."  On closer inspection, we recognized that many of these responses are easily reclassifiable to a lot under study.  A few should not be part of the  analysis because respondents said they biked  to the waterfront the day they were intercepted for an interview. Below is how we have reclassified some of these observations so far.  
+
+* South Cove West
+  + "Cal Sailing"
+  + "West cove"
+  + "West coast"
+  + "Over by cal sailing, not sure which one of those listed this is"
+* O Lot 
+  + "1 Seawall Drive, Gate O Dock"
+* 199 Seawall Drive
+  + "Upper HSL"
+* South Cove East 
+  + "EAST COVE"
+  + "next to new toilet bldg/CAL adventures"
+* Seawall Drive (Street)
+  + "seawall"
+* Skates/N
+  + "Skates"
+* F&G
+  + "F Marina"
+
+
+
+\newpage
+
+```{r retab1, echo=FALSE}
+
+# ===== RE  COUNTS TABLE  =====
+cat("\n=== COUNTS: Parking Lot by Race/Etnicity ===\n")
+countsre <- addmargins(table(park24$location, park24$RE))
+kable(countsre, caption = "Sample Counts")
+
+```
+
+\newpage
+
+```{r retab2, echo=FALSE}
+
+# ===== RE ROW PERCENTAGES =====
+# Shows: Of people parking at each lot, what % are in each RE?
+cat("\n=== ROW %: RE Distribution Within Each Lot ===\n")
+rowpctRE <- prop.table(table(park24$location, park24$RE), margin = 1) * 100
+rowpctRErounded <- round(rowpctRE, 1)
+tabRE1<-rowSums(rowpctRErounded)
+RErow<-cbind(rowpctRErounded,Total=tabRE1)
+kable(RErow, caption = "Row Percentages (% RE within each lot)")
+
+```
+
+\newpage
+
+```{r retab3, echo=FALSE}
+
+# ===== RE COLUMN PERCENTAGES =====
+# Shows: Of people in each RE, what % park at each lot?
+cat("\n=== COLUMN %: Lot Choice Within Each RE Group ===\n")
+colpctRE <- prop.table(table(park24$location, park24$RE), margin = 2) * 100
+colpctRErounded <- round(colpctRE, 1)
+tabRE2<-colSums(colpctRErounded)
+REcol<-rbind(colpctRErounded,Total=tabRE2)
+kable(REcol, caption = "Column Percentages (% within each RE group)")
 
 ```
 
